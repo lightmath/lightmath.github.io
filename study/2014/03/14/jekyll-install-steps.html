@@ -17,7 +17,7 @@
 
         <div class="site">
           <div class="header">
-            <h1 class="title"><a href="https://github.com/lightmath/">LiCheng Blog</a></h1>
+            <h1 class="title"><a href="/">lightmath</a></h1>
             <a class="extra" href="/">home</a>
           </div>
 
@@ -27,11 +27,9 @@
 <div class="post">
 <h2>概要</h2>
 
-<p>去年的时候在开源中国社区看了一篇文章，介绍的就是用github来写博客。苦于当时工作的琐事繁多，一直没有好好
-研究哈。最近心血来潮，下定决心来折腾折腾。</p>
+<p>去年的时候在开源中国社区看了一篇文章，介绍的就是用github来写博客。苦于当时工作的琐事繁多，一直没有好好 研究哈。最近心血来潮，下定决心来折腾折腾。</p>
 
-<p>第一步当然是在github上开辟一个blog仓库啦。其实这一步也有个坑，就是在创建仓库的时候，仓库名字必须是格式
-username.github.io。并且username必须和你的github username一致。
+<p>第一步当然是在github上开辟一个blog仓库啦。其实这一步也有个坑，就是在创建仓库的时候，仓库名字必须是格式 username.github.io。并且username必须和你的github username一致。
 <img src="/img/create-github.io.png" alt="有帮助的截图"></p>
 
 <h2>安装步骤</h2>
@@ -40,141 +38,98 @@ username.github.io。并且username必须和你的github username一致。
 <li>安装 Ruby</li>
 <li>安装 DevKit</li>
 <li>安装 Jekyll</li>
-<li>安装 Pygments
-
-<ul>
 <li>安装 Python</li>
-<li>安装 &#39;Easy Install&#39;</li>
+<li>安装 Install</li>
 <li>安装 Pygments</li>
-</ul></li>
 <li>开始 Jekyll</li>
-<li>致谢</li>
 </ul>
 
-<h2>安装 Ruby</h2>
+</p>
+<h3>安装 Ruby</h3>
 
-<ul>
-<li><p>Go to http://rubyinstaller.org/downloads/</p></li>
-<li><p>在&quot;RubyInstallers&quot;选项里面, 选择一个和你系统相应的版本下载。
-例如，我的机器装的是win7 64位系统，那么就选择Ruby 2.0.0-p451 (x64)。</p></li>
-<li><p>通过安装向导（rubyinstaller-2.0.0-p451-x64.exe）安装</p>
-
-<ul>
-<li>尽可能的保持默认路径（C:\Ruby200-x64）安装</li>
-<li><p>勾选上添加到PATH选项</p>
-
-<p><img src="/img/ruby-installer.png" alt="有帮助的截图"></p></li>
-</ul></li>
-<li><p>接下来，一路下一步，没有什么要注意的啦。安装完毕后，打开命令提示符窗口，输入</p>
-<div class="highlight"><pre><code class="text language-text" data-lang="text">ruby --version
+<ol>
+<li>到这个站点下载Ruby <a href="http://rubyinstaller.org/downloads/">http://rubyinstaller.org/downloads/</a>。</li>
+<li>在&quot;RubyInstallers&quot;选项里面, 选择一个和你系统相应的版本下载。 例如，我的机器装的是win7 64位系统，那么就选择Ruby 2.0.0-p451 (x64)。</li>
+<li>通过安装向导（rubyinstaller-2.0.0-p451-x64.exe）安装。注意：</li>
+<div class="highlight"><pre><code class="text language-text" data-lang="text">- 尽可能的保持默认路径（C:\Ruby200-x64）安装
+- 勾选上添加到PATH选项
+<img src="/img/ruby-installer.png" alt="有帮助的截图">
 </code></pre></div>
-<p>测试ruby安装是否成功。如果可以看到版本号，就说明安装成功</p></li>
-</ul>
+<li>接下来，一路下一步，没有什么要注意的啦。安装完毕后，打开命令提示符窗口，输入</li>
+<div class="highlight"><pre><code class="ruby"><span class="n">ruby</span> <span class="o">--</span><span class="n">version</span>
+</code></pre></div>
+测试ruby安装是否成功。如果可以看到版本号，就说明安装成功。
+</ol>
+</p>
 
-<h2>安装DevKit</h2>
+<h3>安装DevKit</h3>
 
 <p>尽管有同学提到，最好在git bash下安装，据说在DOS命令下错误百出。但是我在DOS下安装还是比较顺利的。</p>
 
-<ul>
-<li>再次到这个网站http://rubyinstaller.org/downloads/</li>
+<ol>
+<li>再次到这个网站<a href="http://rubyinstaller.org/downloads/">http://rubyinstaller.org/downloads/</a>。</li>
 <li>下载DEVELOPMENT KIT安装包，一定要注意和windows操作系统的版本还有Ruby的版本匹配。比如我下载的就是DevKit-mingw64-64-4.7.2-20130224-1432-sfx.exe</li>
-<li>运行安装包，把它解压到C:\DevKit</li>
+<li>运行安装包，把它解压到(<code>C:\DevKit</code>)</li>
 <li>初始化并创建config.yml文件，在命令提示符窗口里输入</li>
-</ul>
-
 <div class="highlight"><pre><code class="ruby"><span class="n">cd</span> <span class="ss">C</span><span class="p">:\</span><span class="no">DevKit</span>
 <span class="n">ruby</span> <span class="n">dk</span><span class="o">.</span><span class="n">rb</span> <span class="n">init</span>
 <span class="n">notepad</span> <span class="n">config</span><span class="o">.</span><span class="n">yml</span>
 </code></pre></div>
-
-<ul>
-<li><p>在打开的文件的末尾，添加一行</p>
-<div class="highlight"><pre><code class="text language-text" data-lang="text">    - C:\Ruby200-x64
-</code></pre></div>
-<p>然后关闭并保存。</p></li>
-<li><p>回到命令提示符窗口，继续输入</p></li>
-</ul>
-
+<li>在打开的文件的末尾，添加一行(<code>- C:\Ruby200-x64</code>)，然后关闭并保存。</li>
+<li>回到命令提示符窗口，继续输入</li>
 <div class="highlight"><pre><code class="ruby"><span class="n">ruby</span> <span class="n">dk</span><span class="o">.</span><span class="n">rb</span> <span class="n">review</span>
 <span class="n">ruby</span> <span class="n">dk</span><span class="o">.</span><span class="n">rb</span> <span class="n">install</span>
 </code></pre></div>
+然后等待安装完成。
+</ol>
+</p>
+<h3>安装 Jekyll</h3>
 
-<h2>安装 Jekyll</h2>
-
-<ul>
-<li><p>确认gem安装完毕</p>
-<div class="highlight"><pre><code class="text language-text" data-lang="text">gem --version
-</code></pre></div></li>
-<li><p>安装Jekyll gem，这里要注意下啦，到目前为止（发布博客），最新的版本是有问题的，我们这里安装的时候，选择一下版本</p>
-<div class="highlight"><pre><code class="text language-text" data-lang="text">gem install jekyll --version &quot;=1.4.2&quot;
+<ol>
+<li>确认gem安装完毕</li>
+<div class="highlight"><pre><code class="ruby"><span class="n">gem</span> <span class="o">--</span><span class="n">version</span>
 </code></pre></div>
-<p>然后就漫长的等待。</p></li>
-<li><p>安装结束后，可以通过这个命令查看jekyll的版本</p>
-<div class="highlight"><pre><code class="text language-text" data-lang="text">jekyll -v
-</code></pre></div></li>
-</ul>
+<li>安装Jekyll gem，这里要注意下啦，到目前为止（发布博客），最新的版本是有问题的，我们这里安装的时候，选择一下版本</li>
+<div class="highlight"><pre><code class="ruby"><span class="n">gem</span> <span class="n">install</span> <span class="n">jekyll</span> <span class="o">--</span><span class="n">version</span> <span class="s2">&quot;=1.4.2&quot;</span>
+</code></pre></div>
 
-<h2>安装 Pygments</h2>
+<p>然后就漫长的等待。</p>
+<li>安装结束后，可以通过这个命令查看jekyll的版本(<code>jekyll -v</code>)</li>
+</ol>
+</p>
+<h3>安装 Python</h3>
 
-<p>Pygments依赖python，所以我们先装python</p>
-
-<ul>
-<li><p>安装 Python</p>
-
-<ul>
-<li>到这里<a href="http://www.python.org/download/">www.python.org/download</a>，下载python2.7版本。</li>
-<li>下载完毕后，安装到C盘根目录。 </li>
+<ol>
+<li>到这里<a href="http://www.python.org/download">www.python.org/download</a>，下载python2.7版本。</li>
+<li>下载完毕后，安装到C盘根目录。</li>
 <li>设置环境变量，把C:\Python27添加到PATH中。</li>
-<li><p>在命令提示符窗口，查看python的版本，验证是否安装成功</p>
-<div class="highlight"><pre><code class="text language-text" data-lang="text">python --version
-</code></pre></div></li>
-</ul></li>
-<li><p>安装&#39;Easy Install&#39;</p>
+<li>在命令提示符窗口输入(<code>python --version</code>)，查看python的版本，验证是否安装成功。</li>
+</ol>
+</p>
+<h3>安装 Easy Install</h3>
 
-<ul>
-<li><p>win7的操作系统，可以直接下载<a href="https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py">ez_setup.py</a>。下载保存到C盘（C:\），然后运行，打开命令提示符，输入：</p>
-<div class="highlight"><pre><code class="text language-text" data-lang="text">python C:\ez_setup.py
-</code></pre></div></li>
-<li><p>把Python Scripts的目录(C:\Python27\Scripts)添加到PATH中。</p></li>
-</ul></li>
-<li><p>安装 Pygments</p>
+<ol>
+<li>win7的操作系统，可以直接下载<a href="https://bitbucket.org/pypa/setuptools/raw/bootstrap/ez_setup.py">ez_setup.py</a>。下载保存到C盘（<code>C:\</code>），然后运行，打开命令提示符，输入(<code>- python C:\ez_setup.py</code>)。</li>
+<li>把Python Scripts的目录(C:\Python27\Scripts)添加到PATH中。</li>
+</ol>
+</p>
+<h3>安装 Pygments</h3>
 
-<ul>
-<li>检查easy_install是否安装成功</li>
-</ul></li>
-</ul>
-
-<div class="highlight"><pre><code class="ruby"><span class="n">easy_install</span> <span class="o">--</span><span class="n">version</span>
-</code></pre></div>
-
-<ul>
-<li>使用&quot;easy_install&quot;安装Pygments</li>
-</ul>
-
-<div class="highlight"><pre><code class="ruby"><span class="n">easy_install</span> <span class="no">Pygments</span>
-</code></pre></div>
-
-<ul>
-<li>安装完毕后，这里又有点小调整。我们需要看一下这个</li>
-</ul>
-
-<div class="highlight"><pre><code class="ruby"><span class="n">gem</span> <span class="n">uninstall</span> <span class="n">pygments</span><span class="o">.</span><span class="n">rb</span>
-</code></pre></div>
-
-<p>不要惊讶，我只是要确认一下，当前的pygments是否和我们的Jekyll版本一致，我在安装的时候，出错了很多次，后来
-才找到原来是pygments和jekyll版本不相容。我把当前的给卸载了，安装0.5.0的</p>
-
-<div class="highlight"><pre><code class="ruby"><span class="n">gem</span> <span class="n">install</span> <span class="n">pygments</span><span class="o">.</span><span class="n">rb</span> <span class="o">--</span><span class="n">version</span> <span class="s2">&quot;=0.5.0&quot;</span>
-</code></pre></div>
-
-<h2>开始 Jekyll</h2>
+<ol>
+<li>检查easy_install是否安装成功：(<code>easy_install --version</code>)</li>
+<li>使用&quot;easy_install&quot;安装Pygments：(<code>easy_install Pygments</code>)</li>
+<li>安装完毕后，这里又有点小调整。我们需要看一下这个：(<code>gem uninstall pygments.rb</code>)；不要惊讶，我只是要确认一下，当前的pygments是否和我们的Jekyll版本一致，我在安装的时候，出错了很多次，后来 才找到原来是pygments和jekyll版本不相容。我把当前的给卸载了，安装0.5.0 (<code>gem install pygments.rb --version &quot;=0.5.0&quot;</code>)</li>
+</ol>
+</p>
+<h3>开始 Jekyll</h3>
 
 <p>三行命令，简单搞起</p>
 <div class="highlight"><pre><code class="text language-text" data-lang="text">jekyll new my-awesome-site
 cd my-awesome-site
 jekyll serve
 </code></pre></div>
-<h2>致谢</h2>
+</p>
+<h3>致谢</h3>
 
 <p>我的安装过程，真的是坎坎坷坷，所以才决定把流程整理一遍记下来。在此过程中，参考了许多同行的经验，看了他们的blog，主要有</p>
 
@@ -193,14 +148,14 @@ jekyll serve
           <div class="footer">
             <div class="contact">
               <p>
-                My Name<br />
-                我经常在这里活动<br />
+                我的名字<br />
+                我经常在这里<br />
               </p>
             </div>
             <div class="contact">
               <p>
-                <a href="https://github.com/lightmath">licheng</a><br />
-                <a href="http://bbs.9ria.com/?10432">9RIA</a><br />
+                <a href="https://github.com/lightmath">lightmath</a><br />
+                <a href="http://www.9ria.com/">9ria</a><br />
               </p>
             </div>
           </div>
