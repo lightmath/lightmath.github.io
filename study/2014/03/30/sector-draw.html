@@ -426,10 +426,9 @@
             <span class="nx">stage</span><span class="p">.</span><span class="nx">scaleMode</span><span class="o">=</span><span class="nb">StageScaleMode</span><span class="p">.</span><span class="nx">NO_SCALE</span><span class="o">;</span>
             
 <span class="c1">//         测试扇形绘制，请把下面两行的注释打开</span>
-<span class="c1">//         setTimeout(init, 5000);</span>
-<span class="c1">//         return;</span>
+            <span class="nx">setTimeout</span><span class="p">(</span><span class="nx">init</span><span class="o">,</span> <span class="mi">5000</span><span class="p">);</span>
+            <span class="k">return</span><span class="o">;</span>
             
-<span class="c1">//         具体情况下使用扇形倒计时</span>
             <span class="k">var</span> <span class="nx">sp</span><span class="o">:</span><span class="nb">DisplayObject</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">SKILL</span> <span class="nx">as</span> <span class="nb">DisplayObject</span><span class="o">;</span>
             <span class="nx">sp</span><span class="p">.</span><span class="nx">x</span><span class="o">=</span><span class="nx">sp</span><span class="p">.</span><span class="nx">y</span><span class="o">=</span><span class="mi">100</span><span class="o">;</span>
             <span class="nx">addChild</span><span class="p">(</span><span class="nx">sp</span><span class="p">);</span>
@@ -448,7 +447,8 @@
         <span class="kd">private</span> <span class="kd">function</span> <span class="nx">init</span><span class="p">()</span><span class="o">:</span><span class="nx">void</span>
         <span class="p">{</span>
             <span class="k">var</span> <span class="nx">sb</span><span class="o">:</span><span class="nb">Shape</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Shape</span><span class="p">();</span>
-            <span class="nx">sb</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">lineStyle</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+            <span class="nx">sb</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">lineStyle</span><span class="p">(</span><span class="mi">3</span><span class="o">,</span><span class="mh">0x00ffff</span><span class="o">,</span><span class="mf">0.5</span><span class="p">);</span>
+            <span class="nx">sb</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">beginFill</span><span class="p">(</span><span class="mh">0x00ffff</span><span class="o">,</span><span class="mf">0.5</span><span class="p">);</span>
             <span class="nx">sb</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">moveTo</span><span class="p">(</span><span class="mi">200</span><span class="o">,</span><span class="mi">200</span><span class="p">);</span>
             <span class="nx">sb</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">lineTo</span><span class="p">(</span><span class="mi">200</span><span class="o">,</span><span class="mi">100</span><span class="p">);</span>
             <span class="nx">addChild</span><span class="p">(</span><span class="nx">sb</span><span class="p">);</span>
