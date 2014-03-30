@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>扇形绘制</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="/css/main.css">
+
+    </head>
+    <body>
+
+        <div class="site">
+          <div class="header">
+            <h1 class="title"><a href="/">lightmath</a></h1>
+            <a class="extra" href="/">home</a>
+          </div>
+
+          <h2>扇形绘制</h2>
+<p class="meta">30 Mar 2014</p>
+
+<div class="post">
+<p>扇形的绘制，常常在游戏的技能冷却的时候，或者是倒计时的时候，特效上会需要用到。在网上搜索了一下，发现了一个比较好用的扇形封装类，特此记下来，以备后用。</p>
+
+<p>先说说原理吧，主要是用到Graphice的moveTo()，lineTo()方法。不停的从中心点绘制一条定长的直线，这一系列直线组合在一起就是扇形了。</p>
+
+<p>封装好的两个类，首先是CoolDownEffect_fan</p>
+
+<div class="highlight"><pre><code class="actionscript"><span class="kd">package</span> 
+<span class="p">{</span>
+    
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nb">BitmapData</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nb">DisplayObject</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nb">DisplayObjectContainer</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nb">Shape</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nb">Sprite</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">events</span><span class="p">.</span><span class="nb">Event</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">filters</span><span class="p">.</span><span class="nb">ColorMatrixFilter</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">text</span><span class="p">.</span><span class="nb">TextField</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">text</span><span class="p">.</span><span class="nb">TextFormat</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nf">getTimer</span><span class="o">;</span>
+    
+    <span class="cm">/**</span>
+<span class="cm">    * 冷却特效-扇形</span>
+<span class="cm">    */</span>
+    <span class="kd">public</span> <span class="kd">class</span> <span class="nx">CoolDownEffect_fan</span>
+    <span class="p">{</span>
+        <span class="cm">/**</span>
+<span class="cm">        * 目标</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">_target</span><span class="o">:</span><span class="nb">DisplayObject</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 将目标对象的一个灰色背景显示到底部.</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">targetBg</span><span class="o">:</span><span class="nb">Sprite</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 遮罩(_target被遮罩),在此遮罩上绘制不断改变的扇形,以达到特效效果.</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">fanMask</span><span class="o">:</span><span class="nb">Shape</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 冷却时间显示</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">coolText</span><span class="o">:</span><span class="nb">TextField</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 开始时间</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">startTime</span><span class="o">:</span><span class="nb">int</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 持续时间</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">_duration</span><span class="o">:</span><span class="nb">int</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 初始角度</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">_initAngle</span><span class="o">:</span><span class="nb">Number</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 冷却特效显示完成时的回调.</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">_completeCallback</span><span class="o">:</span><span class="nb">Function</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 冷却倒计时显示</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">_coolTimeTextFormat</span><span class="o">:</span><span class="nb">TextFormat</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 是否正在播放特效</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">_isPlaying</span><span class="o">:</span><span class="nb">Boolean</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 扇形的半径</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">radius</span><span class="o">:</span><span class="nb">Number</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 扇形的中心点X坐标</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">centerX</span><span class="o">:</span><span class="nb">Number</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 扇形的中心点Y坐标</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">centerY</span><span class="o">:</span><span class="nb">Number</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 上一次绘制扇形的角度</span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">lastAngle</span><span class="o">:</span><span class="nb">Number</span><span class="o">;</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 灰色滤镜</span>
+<span class="cm">        */</span>
+        <span class="kd">public</span> <span class="kd">static</span> <span class="kd">const</span> <span class="nx">GRAY_FILTERS</span><span class="o">:</span><span class="nb">Array</span><span class="o">=</span><span class="p">[</span>
+            <span class="k">new</span> <span class="nb">ColorMatrixFilter</span><span class="p">([</span>
+                <span class="mf">0.25</span><span class="o">,</span>         <span class="mf">0.25</span><span class="o">,</span>         <span class="mf">0.25</span><span class="o">,</span>         <span class="mi">0</span><span class="o">,</span>         <span class="mi">0</span><span class="o">,</span>
+                <span class="mf">0.25</span><span class="o">,</span>         <span class="mf">0.25</span><span class="o">,</span>         <span class="mf">0.25</span><span class="o">,</span>         <span class="mi">0</span><span class="o">,</span>         <span class="mi">0</span><span class="o">,</span>
+                <span class="mf">0.25</span><span class="o">,</span>         <span class="mf">0.25</span><span class="o">,</span>         <span class="mf">0.25</span><span class="o">,</span>         <span class="mi">0</span><span class="o">,</span>         <span class="mi">0</span><span class="o">,</span>                 
+                <span class="mi">0</span><span class="o">,</span>            <span class="mi">0</span><span class="o">,</span>            <span class="mi">0</span><span class="o">,</span>            <span class="mi">1</span><span class="o">,</span>         <span class="mi">0</span>
+            <span class="p">])</span>
+        <span class="p">];</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 将倒计时文本显示中心点</span>
+<span class="cm">        * </span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="kd">function</span> <span class="nx">toCenterCoolText</span><span class="p">()</span><span class="o">:</span><span class="nx">void</span><span class="p">{</span>
+            <span class="nx">coolText</span><span class="p">.</span><span class="nx">width</span> <span class="o">=</span> <span class="nx">coolText</span><span class="p">.</span><span class="nx">textWidth</span> <span class="o">+</span> <span class="mi">4</span><span class="o">;</span>
+            <span class="nx">coolText</span><span class="p">.</span><span class="nx">height</span> <span class="o">=</span> <span class="nx">coolText</span><span class="p">.</span><span class="nx">textHeight</span> <span class="o">+</span> <span class="mi">4</span><span class="o">;</span>
+            <span class="nx">coolText</span><span class="p">.</span><span class="nx">x</span> <span class="o">=</span> <span class="nx">targetBg</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="p">(</span><span class="nx">targetBg</span><span class="p">.</span><span class="nx">width</span> <span class="o">-</span> <span class="nx">coolText</span><span class="p">.</span><span class="nx">width</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="o">;</span>
+            <span class="nx">coolText</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="nx">targetBg</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="p">(</span><span class="nx">targetBg</span><span class="p">.</span><span class="nx">height</span> <span class="o">-</span> <span class="nx">coolText</span><span class="p">.</span><span class="nx">height</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="o">;</span>
+        <span class="p">}</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * </span>
+<span class="cm">        * @param event</span>
+<span class="cm">        * </span>
+<span class="cm">        */</span>
+        <span class="kd">private</span> <span class="kd">function</span> <span class="nx">enterFrameHandler</span><span class="p">(</span><span class="nx">event</span><span class="o">:</span><span class="nb">Event</span><span class="p">)</span><span class="o">:</span><span class="nx">void</span><span class="p">{</span>
+            <span class="k">var</span> <span class="nx">interval</span><span class="o">:</span><span class="nb">int</span><span class="o">=</span> <span class="nf">getTimer</span><span class="p">()</span> <span class="o">-</span> <span class="nx">startTime</span><span class="o">;</span>
+            <span class="k">if</span><span class="p">(</span><span class="nx">interval</span> <span class="o">&gt;=</span> <span class="nx">_duration</span><span class="p">){</span>
+                <span class="nx">stop</span><span class="p">();</span>
+            <span class="p">}</span>
+            
+            <span class="k">var</span> <span class="nx">endAngle</span><span class="o">:</span><span class="nb">Number</span> <span class="o">=</span> <span class="nx">_initAngle</span> <span class="o">+</span> <span class="mi">360</span> <span class="o">*</span> <span class="p">(</span><span class="nx">interval</span> <span class="o">/</span> <span class="nx">_duration</span><span class="p">);</span>
+            <span class="nx">ShapeDraw</span><span class="p">.</span><span class="nx">drawFan</span><span class="p">(</span><span class="nx">fanMask</span><span class="p">.</span><span class="nx">graphics</span><span class="o">,</span> <span class="nx">radius</span><span class="o">,</span> <span class="nx">lastAngle</span><span class="o">,</span> <span class="nx">endAngle</span><span class="o">,</span> <span class="nx">centerX</span><span class="o">,</span> <span class="nx">centerY</span><span class="o">,</span> <span class="mi">4</span><span class="p">);</span>
+            
+            <span class="k">if</span><span class="p">(</span><span class="nx">_coolTimeTextFormat</span><span class="p">){</span>
+                <span class="k">var</span> <span class="nx">remainingTime</span><span class="o">:</span><span class="nb">int</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">ceil</span><span class="p">((</span><span class="nx">_duration</span> <span class="o">-</span> <span class="nx">interval</span><span class="p">)</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">);</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">remainingTime</span> <span class="o">!=</span> <span class="nb">int</span><span class="p">(</span><span class="nx">coolText</span><span class="p">.</span><span class="nx">text</span><span class="p">)){</span>
+                    <span class="nx">coolText</span><span class="p">.</span><span class="nx">text</span> <span class="o">=</span> <span class="nb">String</span><span class="p">(</span><span class="nx">remainingTime</span><span class="p">);</span>
+                    <span class="nx">toCenterCoolText</span><span class="p">();</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+            <span class="nx">lastAngle</span> <span class="o">=</span> <span class="nx">endAngle</span><span class="o">;</span>
+        <span class="p">}</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 播放扇形冷却特效</span>
+<span class="cm">        * @param target    目标</span>
+<span class="cm">        * @param duration  持续时间</span>
+<span class="cm">        * @param initAngle 初始角度</span>
+<span class="cm">        * @param completeCallback  冷却特效显示完成时的回调.</span>
+<span class="cm">        * @param coolTextTextFormat    冷却倒计时显示</span>
+<span class="cm">        * @param coolTextFilters</span>
+<span class="cm">        * @param fanFilters</span>
+<span class="cm">        * </span>
+<span class="cm">        */</span>
+        <span class="kd">public</span> <span class="kd">function</span> <span class="nx">play</span><span class="p">(</span><span class="nx">target</span><span class="o">:</span><span class="nb">DisplayObject</span><span class="o">,</span> <span class="nx">duration</span><span class="o">:</span><span class="nb">int</span><span class="o">,</span> <span class="nx">initAngle</span><span class="o">:</span><span class="nb">Number</span> <span class="o">=</span> <span class="mi">0</span><span class="o">,</span> <span class="nx">completeCallback</span><span class="o">:</span><span class="nb">Function</span> <span class="o">=</span> <span class="kc">null</span><span class="o">,</span> 
+                <span class="nx">coolTextTextFormat</span><span class="o">:</span><span class="nb">TextFormat</span> <span class="o">=</span> <span class="kc">null</span><span class="o">,</span> <span class="nx">coolTextFilters</span><span class="o">:</span><span class="nb">Array</span> <span class="o">=</span> <span class="kc">null</span><span class="o">,</span> <span class="nx">fanFilters</span><span class="o">:</span><span class="nb">Array</span> <span class="o">=</span> <span class="kc">null</span><span class="p">)</span><span class="o">:</span><span class="nx">void</span><span class="p">{</span>
+            <span class="k">var</span> <span class="nx">parent</span><span class="o">:</span><span class="nb">DisplayObjectContainer</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+            
+            <span class="k">if</span><span class="p">(</span><span class="nx">duration</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">){</span>
+                <span class="k">return</span><span class="o">;</span>
+            <span class="p">}</span>
+            
+            <span class="k">if</span><span class="p">(</span><span class="nx">target</span> <span class="o">&amp;&amp;</span> <span class="nx">target</span><span class="p">.</span><span class="nx">stage</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="nx">_isPlaying</span><span class="p">){</span>
+                <span class="nx">_isPlaying</span> <span class="o">=</span> <span class="kc">true</span><span class="o">;</span>
+                <span class="nx">_target</span> <span class="o">=</span> <span class="nx">target</span><span class="o">;</span>
+                <span class="nx">_duration</span> <span class="o">=</span> <span class="nx">duration</span><span class="o">;</span>
+                <span class="nx">_initAngle</span> <span class="o">=</span> <span class="nx">initAngle</span><span class="o">;</span>
+                <span class="nx">_completeCallback</span> <span class="o">=</span> <span class="nx">completeCallback</span><span class="o">;</span>
+                <span class="nx">_coolTimeTextFormat</span> <span class="o">=</span> <span class="nx">coolTextTextFormat</span><span class="o">;</span>
+                <span class="nx">parent</span> <span class="o">=</span> <span class="nx">target</span><span class="p">.</span><span class="nx">parent</span><span class="o">;</span>
+                
+                <span class="k">var</span> <span class="nx">targetBmp</span><span class="o">:</span><span class="nb">BitmapData</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">BitmapData</span><span class="p">(</span><span class="nx">target</span><span class="p">.</span><span class="nx">width</span><span class="o">,</span> <span class="nx">target</span><span class="p">.</span><span class="nx">height</span><span class="o">,</span> <span class="kc">true</span><span class="o">,</span> <span class="mi">0</span><span class="p">);</span>
+                <span class="nx">targetBmp</span><span class="p">.</span><span class="nx">draw</span><span class="p">(</span><span class="nx">target</span><span class="p">);</span>
+                <span class="c1">//BitmapDraw.drawBitmap(targetBg.graphics, targetBmp);</span>
+                
+                <span class="nx">targetBg</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">beginBitmapFill</span><span class="p">(</span><span class="nx">targetBmp</span><span class="p">);</span>
+                <span class="nx">targetBg</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">drawRect</span><span class="p">(</span><span class="mi">0</span><span class="o">,</span><span class="mi">0</span><span class="o">,</span><span class="nx">target</span><span class="p">.</span><span class="nx">width</span><span class="o">,</span> <span class="nx">target</span><span class="p">.</span><span class="nx">height</span><span class="p">);</span>
+                
+                <span class="nx">targetBg</span><span class="p">.</span><span class="nx">filters</span> <span class="o">=</span> <span class="nx">fanFilters</span> <span class="o">||</span> <span class="nx">GRAY_FILTERS</span><span class="o">;</span>
+                <span class="nx">targetBg</span><span class="p">.</span><span class="nx">x</span> <span class="o">=</span> <span class="nx">target</span><span class="p">.</span><span class="nx">x</span><span class="o">;</span>
+                <span class="nx">targetBg</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="nx">target</span><span class="p">.</span><span class="nx">y</span><span class="o">;</span>
+                <span class="nx">parent</span><span class="p">.</span><span class="nx">addChildAt</span><span class="p">(</span><span class="nx">targetBg</span><span class="o">,</span> <span class="nx">parent</span><span class="p">.</span><span class="nx">getChildIndex</span><span class="p">(</span><span class="nx">target</span><span class="p">));</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">target</span> <span class="nx">is</span> <span class="nb">Sprite</span><span class="p">){</span>
+                    <span class="p">(</span><span class="nx">target</span> <span class="nx">as</span> <span class="nb">Sprite</span><span class="p">).</span><span class="nx">hitArea</span> <span class="o">=</span> <span class="nx">targetBg</span><span class="o">;</span>
+                <span class="p">}</span>
+                
+                <span class="nx">fanMask</span><span class="p">.</span><span class="nx">x</span> <span class="o">=</span> <span class="nx">targetBg</span><span class="p">.</span><span class="nx">x</span><span class="o">;</span>
+                <span class="nx">fanMask</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="nx">targetBg</span><span class="p">.</span><span class="nx">y</span><span class="o">;</span>
+                <span class="nx">parent</span><span class="p">.</span><span class="nx">addChild</span><span class="p">(</span><span class="nx">fanMask</span><span class="p">);</span>
+                <span class="nx">target</span><span class="p">.</span><span class="nx">mask</span> <span class="o">=</span> <span class="nx">fanMask</span><span class="o">;</span>
+                
+                <span class="k">if</span><span class="p">(</span><span class="nx">coolTextTextFormat</span><span class="p">){</span>
+                    <span class="nx">coolText</span><span class="p">.</span><span class="nx">filters</span> <span class="o">=</span> <span class="nx">coolTextFilters</span><span class="o">;</span>
+                    <span class="nx">coolText</span><span class="p">.</span><span class="nx">defaultTextFormat</span> <span class="o">=</span> <span class="nx">coolTextTextFormat</span><span class="o">;</span>
+                    <span class="nx">coolText</span><span class="p">.</span><span class="nx">setTextFormat</span><span class="p">(</span><span class="nx">coolTextTextFormat</span><span class="p">);</span>
+                    <span class="nx">coolText</span><span class="p">.</span><span class="nx">text</span> <span class="o">=</span> <span class="nb">String</span><span class="p">(</span><span class="nx">duration</span> <span class="o">/</span> <span class="mi">1000</span><span class="p">);</span>
+                    <span class="nx">toCenterCoolText</span><span class="p">();</span>
+                    <span class="nx">parent</span><span class="p">.</span><span class="nx">addChildAt</span><span class="p">(</span><span class="nx">coolText</span><span class="o">,</span> <span class="p">(</span><span class="nx">parent</span><span class="p">.</span><span class="nx">getChildIndex</span><span class="p">(</span><span class="nx">target</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">));</span>
+                <span class="p">}</span>
+                
+                <span class="nx">radius</span> <span class="o">=</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">sqrt</span><span class="p">(</span><span class="nx">target</span><span class="p">.</span><span class="nx">width</span> <span class="o">*</span> <span class="nx">target</span><span class="p">.</span><span class="nx">width</span> <span class="o">+</span> <span class="nx">target</span><span class="p">.</span><span class="nx">height</span> <span class="o">*</span> <span class="nx">target</span><span class="p">.</span><span class="nx">height</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span><span class="o">;</span>
+                <span class="nx">centerX</span> <span class="o">=</span> <span class="nx">target</span><span class="p">.</span><span class="nx">width</span> <span class="o">/</span> <span class="mi">2</span><span class="o">;</span>
+                <span class="nx">centerY</span> <span class="o">=</span> <span class="nx">target</span><span class="p">.</span><span class="nx">height</span> <span class="o">/</span> <span class="mi">2</span><span class="o">;</span>
+                <span class="nx">startTime</span> <span class="o">=</span> <span class="nf">getTimer</span><span class="p">();</span>
+                <span class="nx">lastAngle</span> <span class="o">=</span> <span class="nx">initAngle</span><span class="o">;</span>
+                <span class="nx">fanMask</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
+                <span class="nx">fanMask</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">beginFill</span><span class="p">(</span><span class="mi">16711680</span><span class="o">,</span> <span class="mf">0.5</span><span class="p">);</span>
+                <span class="nx">targetBg</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="nb">Event</span><span class="p">.</span><span class="nx">ENTER_FRAME</span><span class="o">,</span> <span class="nx">enterFrameHandler</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 停止特效播放</span>
+<span class="cm">        * </span>
+<span class="cm">        */</span>
+        <span class="kd">public</span> <span class="kd">function</span> <span class="nx">stop</span><span class="p">()</span><span class="o">:</span><span class="nx">void</span><span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="nx">_isPlaying</span><span class="p">){</span>
+                <span class="nx">_isPlaying</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+                <span class="nx">targetBg</span><span class="p">.</span><span class="nx">removeEventListener</span><span class="p">(</span><span class="nb">Event</span><span class="p">.</span><span class="nx">ENTER_FRAME</span><span class="o">,</span> <span class="nx">enterFrameHandler</span><span class="p">);</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">_target</span> <span class="nx">is</span> <span class="nb">Sprite</span><span class="p">){</span>
+                    <span class="p">(</span><span class="nx">_target</span> <span class="nx">as</span> <span class="nb">Sprite</span><span class="p">).</span><span class="nx">hitArea</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+                <span class="p">}</span>
+                <span class="nx">_target</span><span class="p">.</span><span class="nx">mask</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+                
+                <span class="nx">targetBg</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">targetBg</span><span class="p">.</span><span class="nx">parent</span><span class="p">){</span>
+                    <span class="nx">targetBg</span><span class="p">.</span><span class="nx">parent</span><span class="p">.</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">targetBg</span><span class="p">);</span>
+                <span class="p">}</span>
+                
+                <span class="nx">fanMask</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">clear</span><span class="p">();</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">fanMask</span><span class="p">.</span><span class="nx">parent</span><span class="p">){</span>
+                    <span class="nx">fanMask</span><span class="p">.</span><span class="nx">parent</span><span class="p">.</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">fanMask</span><span class="p">);</span>
+                <span class="p">}</span>
+                
+                <span class="k">if</span><span class="p">(</span><span class="nx">coolText</span><span class="p">.</span><span class="nx">parent</span><span class="p">){</span>
+                    <span class="nx">coolText</span><span class="p">.</span><span class="nx">parent</span><span class="p">.</span><span class="nx">removeChild</span><span class="p">(</span><span class="nx">coolText</span><span class="p">);</span>
+                    <span class="nx">coolText</span><span class="p">.</span><span class="nx">filters</span> <span class="o">=</span> <span class="kc">null</span><span class="o">;</span>
+                <span class="p">}</span>
+                
+                <span class="k">if</span><span class="p">(</span><span class="nx">_completeCallback</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">){</span>
+                    <span class="nx">_completeCallback</span><span class="p">();</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 冷却特效-扇形</span>
+<span class="cm">        * </span>
+<span class="cm">        */</span>
+        <span class="kd">public</span> <span class="kd">function</span> <span class="nx">CoolDownEffect_fan</span><span class="p">(){</span>
+            <span class="nx">targetBg</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Sprite</span><span class="p">();</span>
+            <span class="nx">targetBg</span><span class="p">.</span><span class="nx">mouseEnabled</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+            <span class="nx">fanMask</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Shape</span><span class="p">();</span>
+            <span class="nx">coolText</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">TextField</span><span class="p">();</span>
+            <span class="nx">coolText</span><span class="p">.</span><span class="nx">mouseEnabled</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+        <span class="p">}</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 目标</span>
+<span class="cm">        * @return </span>
+<span class="cm">        * </span>
+<span class="cm">        */</span>
+        <span class="kd">public</span> <span class="kd">function</span> <span class="kd">get</span> <span class="nx">target</span><span class="p">()</span><span class="o">:</span><span class="nb">DisplayObject</span><span class="p">{</span>
+            <span class="k">return</span> <span class="nx">_target</span><span class="o">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+
+<p>然后是ShapeDraw，ShapeDraw会在每帧被CoolDownEffect_fan调用。</p>
+
+<div class="highlight"><pre><code class="actionscript"><span class="kd">package</span> 
+<span class="p">{</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nb">Graphics</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">geom</span><span class="p">.</span><span class="nb">Point</span><span class="o">;</span>
+    
+    <span class="cm">/**</span>
+<span class="cm">    * 形状绘制</span>
+<span class="cm">    */</span>
+    <span class="kd">public</span> <span class="kd">class</span> <span class="nx">ShapeDraw</span>
+    <span class="p">{</span>
+        <span class="cm">/**</span>
+<span class="cm">        * 获取圆上的一点</span>
+<span class="cm">        * @param radius 半径</span>
+<span class="cm">        * @param radian 弧度</span>
+<span class="cm">        * @param centerX 中心点X坐标</span>
+<span class="cm">        * @param centerY 中心点Y坐标</span>
+<span class="cm">        * @param point 运算完成后会将结果值设置到此对象上</span>
+<span class="cm">        * @return 圆上的一点</span>
+<span class="cm">        * </span>
+<span class="cm">        */</span>
+        <span class="kd">public</span> <span class="kd">static</span> <span class="kd">function</span> <span class="nx">getPointOfCircleByRadian</span><span class="p">(</span><span class="nx">radius</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> <span class="nx">radian</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> 
+                    <span class="nx">centerX</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> <span class="nx">centerY</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> <span class="nx">point</span><span class="o">:</span><span class="nb">Point</span><span class="p">)</span><span class="o">:</span><span class="nb">Point</span><span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="o">!</span><span class="nx">point</span><span class="p">){</span>
+                <span class="nx">point</span><span class="o">=</span><span class="k">new</span> <span class="nb">Point</span><span class="p">();</span>
+            <span class="p">}</span>
+            
+            <span class="nx">point</span><span class="p">.</span><span class="nx">x</span> <span class="o">=</span> <span class="nx">radius</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">cos</span><span class="p">(</span><span class="nx">radian</span><span class="p">);</span>
+            <span class="nx">point</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="nx">radius</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">sin</span><span class="p">(</span><span class="nx">radian</span><span class="p">);</span>
+            <span class="nx">point</span><span class="p">.</span><span class="nx">offset</span><span class="p">(</span><span class="nx">centerX</span><span class="o">,</span> <span class="nx">centerY</span><span class="p">);</span>
+            
+            <span class="k">return</span> <span class="nx">point</span><span class="o">;</span>
+        <span class="p">}</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 获取圆上的一点</span>
+<span class="cm">        * @param radius 半径</span>
+<span class="cm">        * @param angle 角度</span>
+<span class="cm">        * @param centerX 中心点X坐标</span>
+<span class="cm">        * @param centerY 中心点Y坐标</span>
+<span class="cm">        * @param point 运算完成后会将结果值设置到此对象上</span>
+<span class="cm">        * @return 圆上的一点</span>
+<span class="cm">        * </span>
+<span class="cm">        */</span>
+        <span class="kd">public</span> <span class="kd">static</span> <span class="kd">function</span> <span class="nx">getPointOfCircleByAngle</span><span class="p">(</span><span class="nx">radius</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> <span class="nx">angle</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> <span class="nx">centerX</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> <span class="nx">centerY</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> <span class="nx">point</span><span class="o">:</span><span class="nb">Point</span><span class="p">)</span><span class="o">:</span><span class="nb">Point</span><span class="p">{</span>
+            <span class="k">return</span> <span class="nx">getPointOfCircleByRadian</span><span class="p">(</span><span class="nx">radius</span><span class="o">,</span><span class="nx">angle</span> <span class="o">/</span> <span class="mi">180</span> <span class="o">*</span> <span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="o">,</span><span class="nx">centerX</span><span class="o">,</span><span class="nx">centerY</span><span class="o">,</span><span class="nx">point</span><span class="p">);</span>
+        <span class="p">}</span>
+        
+        <span class="kd">public</span> <span class="kd">static</span> <span class="kd">function</span> <span class="nx">drawFan</span><span class="p">(</span><span class="nx">graphics</span><span class="o">:</span><span class="nb">Graphics</span><span class="o">,</span> <span class="nx">radius</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> <span class="nx">startAngle</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> <span class="nx">endAngle</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span>
+                    <span class="nx">centerX</span><span class="o">:</span><span class="nb">Number</span> <span class="o">=</span> <span class="mi">0</span><span class="o">,</span> <span class="nx">centerY</span><span class="o">:</span><span class="nb">Number</span> <span class="o">=</span> <span class="mi">0</span><span class="o">,</span> <span class="nx">step</span><span class="o">:</span><span class="nb">Number</span> <span class="o">=</span> <span class="mi">5</span><span class="p">)</span><span class="o">:</span><span class="nx">void</span><span class="p">{</span>
+            <span class="k">if</span><span class="p">(</span><span class="nx">startAngle</span> <span class="o">==</span> <span class="nx">endAngle</span> <span class="o">||</span> <span class="nx">step</span> <span class="o">==</span> <span class="mi">0</span><span class="p">){</span>
+                <span class="k">return</span><span class="o">;</span>
+            <span class="p">}</span>
+            
+            <span class="kd">const</span> <span class="nx">PI</span><span class="o">:</span><span class="nb">Number</span><span class="o">=</span><span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="o">;</span>
+            <span class="kd">const</span> <span class="nx">PI2</span><span class="o">:</span><span class="nb">Number</span><span class="o">=</span><span class="nx">PI</span><span class="o">*</span><span class="mi">2</span><span class="o">;</span>
+            
+            <span class="k">var</span> <span class="nx">startR</span><span class="o">:</span><span class="nb">Number</span><span class="o">=</span><span class="nx">startAngle</span> <span class="o">/</span> <span class="mi">180</span> <span class="o">*</span> <span class="nx">PI</span><span class="o">;</span>
+            <span class="k">var</span> <span class="nx">endR</span><span class="o">:</span><span class="nb">Number</span><span class="o">=</span><span class="nx">endAngle</span> <span class="o">/</span> <span class="mi">180</span> <span class="o">*</span> <span class="nx">PI</span><span class="o">;</span>
+            <span class="nx">step</span><span class="o">=</span><span class="nx">step</span> <span class="o">/</span> <span class="mi">180</span> <span class="o">*</span> <span class="nx">PI</span><span class="o">;</span>
+            
+            <span class="k">var</span> <span class="nx">p</span><span class="o">:</span><span class="nb">Point</span><span class="o">=</span><span class="k">new</span> <span class="nb">Point</span><span class="p">();</span>
+            <span class="k">var</span> <span class="nx">radian</span><span class="o">:</span><span class="nb">Number</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+            
+            <span class="nx">graphics</span><span class="p">.</span><span class="nx">moveTo</span><span class="p">(</span><span class="nx">centerX</span><span class="o">,</span> <span class="nx">centerY</span><span class="p">);</span>
+            <span class="k">if</span><span class="p">(</span><span class="nx">startR</span> <span class="o">&lt;</span> <span class="nx">endR</span><span class="p">){</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">endR</span> <span class="o">-</span> <span class="nx">startR</span> <span class="o">&gt;=</span> <span class="nx">PI2</span><span class="p">){</span>
+                    <span class="nx">startR</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+                    <span class="nx">endR</span><span class="o">=</span><span class="nx">PI2</span><span class="o">;</span>
+                <span class="p">}</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">step</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">){</span>
+                    <span class="nx">step</span><span class="o">=-</span><span class="nx">step</span><span class="o">;</span>
+                <span class="p">}</span>
+                
+                <span class="nx">radian</span><span class="o">=</span><span class="nx">startR</span><span class="o">;</span>
+                <span class="k">do</span><span class="p">{</span>
+                    <span class="nx">getPointOfCircleByRadian</span><span class="p">(</span><span class="nx">radius</span><span class="o">,</span><span class="nx">radian</span><span class="o">,</span><span class="nx">centerX</span><span class="o">,</span><span class="nx">centerY</span><span class="o">,</span><span class="nx">p</span><span class="p">);</span>
+                    <span class="nx">graphics</span><span class="p">.</span><span class="nx">lineTo</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">x</span><span class="o">,</span><span class="nx">p</span><span class="p">.</span><span class="nx">y</span><span class="p">);</span>
+                    
+                    <span class="nx">radian</span> <span class="o">+=</span> <span class="nx">step</span><span class="o">;</span>
+                <span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="nx">radian</span> <span class="o">&lt;</span> <span class="nx">endR</span><span class="p">);</span>
+            <span class="p">}</span><span class="k">else</span><span class="p">{</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">startR</span> <span class="o">-</span> <span class="nx">endR</span> <span class="o">&gt;=</span> <span class="nx">PI2</span><span class="p">){</span>
+                    <span class="nx">startR</span><span class="o">=</span><span class="nx">PI2</span><span class="o">;</span>
+                    <span class="nx">endR</span><span class="o">=</span><span class="mi">0</span><span class="o">;</span>
+                <span class="p">}</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">step</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">){</span>
+                    <span class="nx">step</span><span class="o">=-</span><span class="nx">step</span><span class="o">;</span>
+                <span class="p">}</span>
+                
+                <span class="nx">radian</span><span class="o">=</span><span class="nx">startR</span><span class="o">;</span>
+                <span class="k">do</span><span class="p">{</span>
+                    <span class="nx">getPointOfCircleByRadian</span><span class="p">(</span><span class="nx">radius</span><span class="o">,</span><span class="nx">radian</span><span class="o">,</span><span class="nx">centerX</span><span class="o">,</span><span class="nx">centerY</span><span class="o">,</span><span class="nx">p</span><span class="p">);</span>
+                    <span class="nx">graphics</span><span class="p">.</span><span class="nx">lineTo</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">x</span><span class="o">,</span><span class="nx">p</span><span class="p">.</span><span class="nx">y</span><span class="p">);</span>
+                    
+                    <span class="nx">radian</span> <span class="o">+=</span> <span class="nx">step</span><span class="o">;</span>
+                <span class="p">}</span><span class="k">while</span><span class="p">(</span><span class="nx">radian</span> <span class="o">&gt;</span> <span class="nx">endR</span><span class="p">);</span>
+            <span class="p">}</span>
+            
+            <span class="nx">getPointOfCircleByRadian</span><span class="p">(</span><span class="nx">radius</span><span class="o">,</span><span class="nx">endR</span><span class="o">,</span><span class="nx">centerX</span><span class="o">,</span><span class="nx">centerY</span><span class="o">,</span><span class="nx">p</span><span class="p">);</span>
+            <span class="nx">graphics</span><span class="p">.</span><span class="nx">lineTo</span><span class="p">(</span><span class="nx">p</span><span class="p">.</span><span class="nx">x</span><span class="o">,</span> <span class="nx">p</span><span class="p">.</span><span class="nx">y</span><span class="p">);</span>
+            <span class="nx">graphics</span><span class="p">.</span><span class="nx">lineTo</span><span class="p">(</span><span class="nx">centerX</span><span class="o">,</span> <span class="nx">centerY</span><span class="p">);</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+
+<p>下面的外部使用的类，或者叫做测试类吧</p>
+
+<div class="highlight"><pre><code class="actionscript"><span class="kd">package</span>
+<span class="p">{</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nb">DisplayObject</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nb">Shape</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nb">Sprite</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">display</span><span class="p">.</span><span class="nb">StageScaleMode</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">events</span><span class="p">.</span><span class="nb">Event</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">text</span><span class="p">.</span><span class="nb">TextFormat</span><span class="o">;</span>
+    <span class="kd">import</span> <span class="nx">flash</span><span class="p">.</span><span class="nx">utils</span><span class="p">.</span><span class="nx">setTimeout</span><span class="o">;</span>
+    
+    <span class="kd">public</span> <span class="kd">class</span> <span class="nx">TestOne</span> <span class="kd">extends</span> <span class="nb">Sprite</span>
+    <span class="p">{</span>
+        
+        <span class="p">[</span> <span class="nx">Embed</span><span class="p">(</span><span class="nx">source</span><span class="o">=</span><span class="s2">&quot;skill.swf&quot;</span><span class="o">,</span> <span class="nx">symbol</span><span class="o">=</span><span class="s2">&quot;Skill_600001&quot;</span><span class="p">)</span> <span class="p">]</span> 
+        <span class="kd">private</span> <span class="k">var</span> <span class="nx">SKILL</span><span class="o">:</span><span class="nb">Class</span><span class="o">;</span>
+        
+        <span class="kd">public</span> <span class="kd">function</span> <span class="nx">TestOne</span><span class="p">()</span>
+        <span class="p">{</span>
+            <span class="nx">stage</span><span class="p">.</span><span class="nx">scaleMode</span><span class="o">=</span><span class="nb">StageScaleMode</span><span class="p">.</span><span class="nx">NO_SCALE</span><span class="o">;</span>
+            
+<span class="c1">//         测试扇形绘制，请把下面两行的注释打开</span>
+<span class="c1">//         setTimeout(init, 5000);</span>
+<span class="c1">//         return;</span>
+            
+<span class="c1">//         具体情况下使用扇形倒计时</span>
+            <span class="k">var</span> <span class="nx">sp</span><span class="o">:</span><span class="nb">DisplayObject</span> <span class="o">=</span> <span class="k">new</span> <span class="nx">SKILL</span> <span class="nx">as</span> <span class="nb">DisplayObject</span><span class="o">;</span>
+            <span class="nx">sp</span><span class="p">.</span><span class="nx">x</span><span class="o">=</span><span class="nx">sp</span><span class="p">.</span><span class="nx">y</span><span class="o">=</span><span class="mi">100</span><span class="o">;</span>
+            <span class="nx">addChild</span><span class="p">(</span><span class="nx">sp</span><span class="p">);</span>
+            <span class="k">var</span> <span class="nx">fanEft</span><span class="o">:</span><span class="nx">CoolDownEffect_fan</span><span class="o">=</span><span class="k">new</span> <span class="nx">CoolDownEffect_fan</span><span class="p">();</span>
+            <span class="c1">//参数:目标对象,持续时间(毫秒),初始角度,播放完成时的回调,倒计时的文本格式,倒计时文本的滤镜,扇形背景的滤镜</span>
+            <span class="nx">fanEft</span><span class="p">.</span><span class="nx">play</span><span class="p">(</span><span class="nx">sp</span><span class="o">,</span><span class="mi">3000</span><span class="o">,-</span><span class="mi">90</span><span class="o">,</span><span class="nx">playComplete</span><span class="o">,</span><span class="k">new</span> <span class="nb">TextFormat</span><span class="p">(</span><span class="kc">null</span><span class="o">,</span><span class="mi">18</span><span class="o">,</span><span class="mh">0x00ffff</span><span class="o">,</span><span class="kc">true</span><span class="p">));</span>
+            <span class="kd">function</span> <span class="nx">playComplete</span><span class="p">()</span><span class="o">:</span><span class="nx">void</span><span class="p">{</span>
+                <span class="nx">fanEft</span><span class="p">.</span><span class="nx">play</span><span class="p">(</span><span class="nx">sp</span><span class="o">,</span><span class="mi">3000</span><span class="o">,-</span><span class="mi">90</span><span class="o">,</span><span class="nx">playComplete</span><span class="o">,</span><span class="k">new</span> <span class="nb">TextFormat</span><span class="p">(</span><span class="kc">null</span><span class="o">,</span><span class="mi">18</span><span class="o">,</span><span class="mh">0xff00ff</span><span class="o">,</span><span class="kc">true</span><span class="p">));</span>
+<span class="c1">//             trace(&quot;complete&quot;);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+        <span class="cm">/**</span>
+<span class="cm">        * 测试</span>
+<span class="cm">        */</span>      
+        <span class="kd">private</span> <span class="kd">function</span> <span class="nx">init</span><span class="p">()</span><span class="o">:</span><span class="nx">void</span>
+        <span class="p">{</span>
+            <span class="k">var</span> <span class="nx">sb</span><span class="o">:</span><span class="nb">Shape</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">Shape</span><span class="p">();</span>
+            <span class="nx">sb</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">lineStyle</span><span class="p">(</span><span class="mi">3</span><span class="p">);</span>
+            <span class="nx">sb</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">moveTo</span><span class="p">(</span><span class="mi">200</span><span class="o">,</span><span class="mi">200</span><span class="p">);</span>
+            <span class="nx">sb</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">lineTo</span><span class="p">(</span><span class="mi">200</span><span class="o">,</span><span class="mi">100</span><span class="p">);</span>
+            <span class="nx">addChild</span><span class="p">(</span><span class="nx">sb</span><span class="p">);</span>
+            <span class="nx">sb</span><span class="p">.</span><span class="nx">addEventListener</span><span class="p">(</span><span class="nb">Event</span><span class="p">.</span><span class="nx">ENTER_FRAME</span><span class="o">,</span> <span class="nx">onhandle</span><span class="p">);</span>
+            <span class="k">var</span> <span class="nx">xx</span><span class="o">:</span><span class="nb">Number</span><span class="o">;</span>
+            <span class="k">var</span> <span class="nx">yy</span><span class="o">:</span><span class="nb">Number</span><span class="o">;</span>
+            <span class="k">var</span> <span class="nx">endAngle</span><span class="o">:</span><span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="o">;</span>
+            <span class="k">var</span> <span class="nx">starAngle</span><span class="o">:</span><span class="nb">int</span> <span class="o">=</span> <span class="mi">90</span><span class="o">;</span>
+            <span class="kd">function</span> <span class="nx">onhandle</span><span class="p">(</span><span class="nx">e</span><span class="o">:</span><span class="nb">Event</span><span class="p">)</span><span class="o">:</span><span class="nx">void</span>
+            <span class="p">{</span>
+                <span class="k">if</span><span class="p">(</span><span class="nx">starAngle</span> <span class="o">&lt;</span> <span class="nx">endAngle</span><span class="p">)</span>
+                <span class="p">{</span>
+                    <span class="nx">sb</span><span class="p">.</span><span class="nx">removeEventListener</span><span class="p">(</span><span class="nb">Event</span><span class="p">.</span><span class="nx">ENTER_FRAME</span><span class="o">,</span> <span class="nx">onhandle</span><span class="p">);</span>
+                <span class="p">}</span>
+                <span class="k">else</span>
+                <span class="p">{</span>
+                    <span class="nx">starAngle</span> <span class="o">-=</span> <span class="mi">1</span><span class="o">;</span>
+                    <span class="nx">xx</span> <span class="o">=</span> <span class="mi">200</span><span class="o">+</span><span class="mi">100</span><span class="o">*</span><span class="nb">Math</span><span class="p">.</span><span class="nx">cos</span><span class="p">(</span><span class="nx">starAngle</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">);</span>
+                    <span class="nx">yy</span> <span class="o">=</span> <span class="mi">200</span><span class="o">-</span><span class="mi">100</span><span class="o">*</span><span class="nb">Math</span><span class="p">.</span><span class="nx">sin</span><span class="p">(</span><span class="nx">starAngle</span><span class="o">/</span><span class="mi">180</span><span class="o">*</span><span class="nb">Math</span><span class="p">.</span><span class="nx">PI</span><span class="p">);</span>
+                    <span class="nx">sb</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">lineTo</span><span class="p">(</span><span class="nx">xx</span><span class="o">,</span> <span class="nx">yy</span><span class="p">);</span>
+                    <span class="nx">sb</span><span class="p">.</span><span class="nx">graphics</span><span class="p">.</span><span class="nx">moveTo</span><span class="p">(</span><span class="mi">200</span><span class="o">,</span><span class="mi">200</span><span class="p">);</span>
+                <span class="p">}</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+        
+    <span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+
+
+<p>参考资料
+<a href="http://bbs.9ria.com/forum.php?mod=viewthread&tid=220843&highlight=扇形" target="_blank">http://bbs.9ria.com/forum.php?mod=viewthread&amp;tid=220843&amp;highlight=扇形</a></p>
+
+<p>源代码下载
+<a href="../../../../download/sector-src.rar" target="_blank">源代码</a></p>
+
+</div>
+
+
+          <div class="footer">
+            <div class="contact">
+              <p>
+                我的名字<br />
+                我经常在这里<br />
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="https://github.com/lightmath"  target="_blank">lightmath</a><br />
+                <a href="http://www.9ria.com/"  target="_blank">9ria</a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+
+    </body>
+</html>
