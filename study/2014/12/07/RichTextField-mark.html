@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+        <title>富文本实现框架--RichTextField</title>
+        <meta name="viewport" content="width=device-width">
+
+        <!-- syntax highlighting CSS -->
+        <link rel="stylesheet" href="/css/syntax.css">
+
+        <!-- Custom CSS -->
+        <link rel="stylesheet" href="/css/main.css">
+
+    </head>
+    <body>
+
+        <div class="site">
+          <div class="header">
+            <h1 class="title"><a href="/">lightmath</a></h1>
+            <a class="extra" href="/">home</a>
+          </div>
+
+          <h2>富文本实现框架--RichTextField</h2>
+<p class="meta">07 Dec 2014</p>
+
+<div class="post">
+<p>说起RichTextField，在09年的时候就接触了，使用过一次，感觉当时没有遇到这么多的问题啊，最近开发聊天系统。项目组没有人，只有自己亲自出马了。在选择技术方案的时候，纠结是使用TLF，还是使用第三方开源库呢。结合项目情况，比较后发现，采用RichTextField吧，TLF主要是要再倒入一个库，大约有200K，太大了。随后就采用了RichTextField，隔的时间有些久了，做的过程中遇到这些坑，mark下来。</p>
+
+<p>RichTextField的实现思路，是分两层，一层显示文本，一层显示表情，插入表情的时候，我们可以很清楚的知道插入的位置，然后记下当前位置和表情，然后在文本的这个地方空出足够的宽度，显示表情。</p>
+
+<p>1，关于RichTextField2.0在flex sdk4.6下表情显示错乱的问题</p>
+
+<p>解决方法：</p>
+
+<p>SpriteRenderer.as类</p>
+
+<div class="highlight"><pre><code class="actionscript"><span class="kd">private</span> <span class="kd">function</span> <span class="nx">renderSprite</span><span class="p">(</span><span class="nx">sprite</span><span class="o">:</span><span class="nb">DisplayObject</span><span class="o">,</span> <span class="nx">index</span><span class="o">:</span><span class="nb">int</span><span class="p">)</span><span class="o">:</span><span class="nx">void</span>
+        <span class="p">{</span>            
+            <span class="k">var</span> <span class="nx">rect</span><span class="o">:</span><span class="nb">Rectangle</span> <span class="o">=</span> <span class="nx">textRenderer</span><span class="p">.</span><span class="nx">getCharBoundaries</span><span class="p">(</span><span class="nx">index</span><span class="p">);</span>    
+            <span class="k">if</span> <span class="p">(</span><span class="nx">rect</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span>
+            <span class="p">{</span>
+                <span class="nx">sprite</span><span class="p">.</span><span class="nx">x</span> <span class="o">=</span> <span class="p">(</span><span class="nx">rect</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="p">(</span><span class="nx">rect</span><span class="p">.</span><span class="nx">width</span> <span class="o">-</span> <span class="nx">sprite</span><span class="p">.</span><span class="nx">width</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">0</span><span class="o">;</span>
+                <span class="k">var</span> <span class="nx">y</span><span class="o">:</span><span class="nb">Number</span> <span class="o">=</span> <span class="p">(</span><span class="nx">rect</span><span class="p">.</span><span class="nx">height</span> <span class="o">-</span> <span class="nx">sprite</span><span class="p">.</span><span class="nx">height</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span><span class="o">;</span>
+                <span class="k">var</span> <span class="nx">lineMetrics</span><span class="o">:</span><span class="nb">TextLineMetrics</span> <span class="o">=</span> <span class="nx">textRenderer</span><span class="p">.</span><span class="nx">getLineMetrics</span><span class="p">(</span><span class="nx">textRenderer</span><span class="p">.</span><span class="nx">getLineIndexOfChar</span><span class="p">(</span><span class="nx">index</span><span class="p">));</span>
+                <span class="c1">//make sure the sprite&#39;s y is not smaller than the ascent of line metrics</span>
+                <span class="k">if</span> <span class="p">(</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">sprite</span><span class="p">.</span><span class="nx">height</span> <span class="o">&lt;</span> <span class="nx">lineMetrics</span><span class="p">.</span><span class="nx">ascent</span><span class="p">)</span> <span class="nx">y</span> <span class="o">=</span> <span class="nx">lineMetrics</span><span class="p">.</span><span class="nx">ascent</span> <span class="o">-</span> <span class="nx">sprite</span><span class="p">.</span><span class="nx">height</span><span class="o">;</span>
+                <span class="nx">sprite</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="p">(</span><span class="nx">rect</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">y</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">0</span><span class="o">;</span>
+                <span class="c1">//flex sdk 4.6添加,否则有显示bug</span>
+                <span class="nx">sprite</span><span class="p">.</span><span class="nx">y</span> <span class="o">+=</span> <span class="o">-</span><span class="nx">_spriteContainer</span><span class="p">.</span><span class="nx">y</span><span class="o">;</span>
+                <span class="nx">_spriteContainer</span><span class="p">.</span><span class="nx">addChild</span><span class="p">(</span><span class="nx">sprite</span><span class="p">);</span>
+            <span class="p">}</span>
+        <span class="p">}</span>
+</code></pre></div>
+
+
+<p>参考blog<br/>
+http://blog.sina.com.cn/s/blog_4b6331fd0101goz3.html</p>
+
+<p>2，针对在输入框中，输入文本和插入表情的时候，光标会突然变大的解决方法是</p>
+
+<p>在RichTextField.as类中的，calcPlaceholderFormat方法</p>
+
+<div class="highlight"><pre><code class="actionscript"><span class="kd">private</span> <span class="kd">function</span> <span class="nx">calcPlaceholderFormat</span><span class="p">(</span><span class="nx">width</span><span class="o">:</span><span class="nb">Number</span><span class="o">,</span> <span class="nx">height</span><span class="o">:</span><span class="nb">Number</span><span class="p">)</span><span class="o">:</span><span class="nb">TextFormat</span>
+  <span class="p">{</span>
+   <span class="k">var</span> <span class="nx">format</span><span class="o">:</span><span class="nb">TextFormat</span> <span class="o">=</span> <span class="k">new</span> <span class="nb">TextFormat</span><span class="p">();</span>
+   <span class="nx">format</span><span class="p">.</span><span class="nx">color</span> <span class="o">=</span> <span class="nx">_placeholderColor</span><span class="o">;</span>
+<span class="c1">//  format.size = height + 2 * _placeholderMarginV;</span>
+   <span class="k">if</span><span class="p">(</span><span class="nx">type</span> <span class="o">==</span> <span class="nx">DYNAMIC</span><span class="p">)</span>
+    <span class="nx">format</span><span class="p">.</span><span class="nx">size</span> <span class="o">=</span> <span class="nx">height</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="nx">_placeholderMarginV</span><span class="o">;</span>
+   
+   <span class="c1">//calculate placeholder text metrics with certain size to get actual letterSpacing</span>
+   <span class="nx">_formatCalculator</span><span class="p">.</span><span class="nx">setTextFormat</span><span class="p">(</span><span class="nx">format</span><span class="p">);</span>
+   <span class="k">var</span> <span class="nx">metrics</span><span class="o">:</span><span class="nb">TextLineMetrics</span> <span class="o">=</span> <span class="nx">_formatCalculator</span><span class="p">.</span><span class="nx">getLineMetrics</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+   
+   <span class="c1">//letterSpacing is the key value for placeholder</span>
+   <span class="nx">format</span><span class="p">.</span><span class="nx">letterSpacing</span> <span class="o">=</span> <span class="nx">width</span> <span class="o">-</span> <span class="nx">metrics</span><span class="p">.</span><span class="nx">width</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="nx">_placeholderMarginH</span><span class="o">;</span>
+   <span class="nx">format</span><span class="p">.</span><span class="nx">underline</span> <span class="o">=</span> <span class="nx">format</span><span class="p">.</span><span class="nx">italic</span> <span class="o">=</span> <span class="nx">format</span><span class="p">.</span><span class="nx">bold</span> <span class="o">=</span> <span class="kc">false</span><span class="o">;</span>
+   <span class="k">return</span> <span class="nx">format</span><span class="o">;</span>
+  <span class="p">}</span>
+</code></pre></div>
+
+
+<p>3，针对在输入框中，输入文本和插入表情，字数超过显示区域，输入框默认会自动向左把文本内容移动左边一些，而这个时候表情显示就会位置不对。
+解决方法是：</p>
+
+<p>在SpriteRenderer.as类中，renderSprite方法，修改为</p>
+
+<div class="highlight"><pre><code class="actionscript">  <span class="kd">private</span> <span class="kd">function</span> <span class="nx">renderSprite</span><span class="p">(</span><span class="nx">sprite</span><span class="o">:</span><span class="nb">DisplayObject</span><span class="o">,</span> <span class="nx">index</span><span class="o">:</span><span class="nb">int</span><span class="p">)</span><span class="o">:</span><span class="nx">void</span>
+  <span class="p">{</span>
+   <span class="k">var</span> <span class="nx">rect</span><span class="o">:</span><span class="nb">Rectangle</span> <span class="o">=</span> <span class="nx">textRenderer</span><span class="p">.</span><span class="nx">getCharBoundaries</span><span class="p">(</span><span class="nx">index</span><span class="p">);</span>
+   <span class="k">if</span> <span class="p">(</span><span class="nx">rect</span> <span class="o">!=</span> <span class="kc">null</span><span class="p">)</span>
+   <span class="p">{</span>
+    <span class="k">var</span> <span class="nx">offx</span><span class="o">:</span><span class="nb">int</span> <span class="o">=</span> <span class="nx">textRenderer</span><span class="p">.</span><span class="nx">scrollH</span><span class="o">;</span>
+    <span class="k">var</span> <span class="nx">spritex</span><span class="o">:</span><span class="nb">int</span> <span class="o">=</span> <span class="p">((</span><span class="nx">rect</span><span class="p">.</span><span class="nx">x</span> <span class="o">+</span> <span class="p">(</span><span class="nx">rect</span><span class="p">.</span><span class="nx">width</span> <span class="o">-</span> <span class="nx">sprite</span><span class="p">.</span><span class="nx">width</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <span class="nx">offx</span><span class="o">;</span>
+    <span class="k">var</span> <span class="nx">y</span><span class="o">:</span><span class="nb">Number</span> <span class="o">=</span> <span class="p">(</span><span class="nx">rect</span><span class="p">.</span><span class="nx">height</span> <span class="o">-</span> <span class="nx">sprite</span><span class="p">.</span><span class="nx">height</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span><span class="o">;</span>
+    <span class="k">var</span> <span class="nx">lineMetrics</span><span class="o">:</span><span class="nb">TextLineMetrics</span> <span class="o">=</span> <span class="nx">textRenderer</span><span class="p">.</span><span class="nx">getLineMetrics</span><span class="p">(</span><span class="nx">textRenderer</span><span class="p">.</span><span class="nx">getLineIndexOfChar</span><span class="p">(</span><span class="nx">index</span><span class="p">));</span>
+    <span class="c1">//make sure the sprite&#39;s y is not smaller than the ascent of line metrics</span>
+    <span class="k">if</span> <span class="p">(</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">sprite</span><span class="p">.</span><span class="nx">height</span> <span class="o">&lt;</span> <span class="nx">lineMetrics</span><span class="p">.</span><span class="nx">ascent</span><span class="p">)</span> <span class="nx">y</span> <span class="o">=</span> <span class="nx">lineMetrics</span><span class="p">.</span><span class="nx">ascent</span> <span class="o">-</span> <span class="nx">sprite</span><span class="p">.</span><span class="nx">height</span><span class="o">;</span>
+    <span class="nx">sprite</span><span class="p">.</span><span class="nx">y</span> <span class="o">=</span> <span class="p">(</span><span class="nx">rect</span><span class="p">.</span><span class="nx">y</span> <span class="o">+</span> <span class="nx">y</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">&gt;&gt;</span> <span class="mi">0</span><span class="o">;</span>
+    <span class="nx">sprite</span><span class="p">.</span><span class="nx">y</span> <span class="o">+=</span> <span class="o">-</span><span class="nx">_spriteContainer</span><span class="p">.</span><span class="nx">y</span><span class="o">;</span>
+    <span class="nx">sprite</span><span class="p">.</span><span class="nx">x</span> <span class="o">=</span> <span class="nx">spritex</span><span class="o">;</span>
+    <span class="k">if</span><span class="p">(</span><span class="nx">spritex</span><span class="o">&gt;=</span><span class="mi">0</span><span class="p">)</span>
+     <span class="nx">_spriteContainer</span><span class="p">.</span><span class="nx">addChild</span><span class="p">(</span><span class="nx">sprite</span><span class="p">);</span>
+   <span class="p">}</span>
+  <span class="p">}</span>
+</code></pre></div>
+
+
+<p>源代码下载
+<a href="../../../../download/RichTextField.rar" target="_blank">源代码</a></p>
+
+<p>项目运行注意事项，Test.as是文档类，打开fla文件，然后发布，就可以看到效果，代码查看请使用EditPlus,或者在Flashbuilder里，建立一个工程，导入，查看代码</p>
+
+</div>
+
+
+          <div class="footer">
+            <div class="contact">
+              <p>
+                我的名字<br />
+                我经常在这里<br />
+              </p>
+            </div>
+            <div class="contact">
+              <p>
+                <a href="https://github.com/lightmath"  target="_blank">lightmath</a><br />
+                <a href="http://www.9ria.com/"  target="_blank">9ria</a><br />
+              </p>
+            </div>
+          </div>
+        </div>
+
+    </body>
+</html>
